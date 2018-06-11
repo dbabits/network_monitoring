@@ -1,0 +1,373 @@
+.TH VNSTAT.CONF 5 "MARCH 2018" "version 1.18" "User Manuals"
+.SH NAME
+
+vnstat.conf \- vnStat configuration file
+
+.SH SYNOPSIS
+
+.B /etc/vnstat.conf
+
+.SH DESCRIPTION
+
+.BR vnstat (1),
+.BR vnstati (1)
+and
+.BR vnstatd (1)
+all use the same configuration file for configuration related settings.
+Some of the settings are common for all three programs. The file
+consists of keyword-argument pairs, one per line. Empty lines and
+lines starting with\ '#\' are interpreted as comments and not processed.
+Arguments may optionally be enclosed in double quotes (") in order
+to represent arguments containing spaces. Arguments can be padded
+with spaces or tabulator characters. A hardcoded default value
+will be used if a keyword can't be found from the configuration file.
+.PP
+The configuration file is divided into three sections based on the
+usage of each keyword. The first section contains keywords that are
+considered generic for all commands, the second section is for
+daemon related keywords and the last section is for image output.
+
+.SH COMMON KEYWORDS
+
+.TP
+.B BandwidthDetection
+Try to automatically detect
+.B MaxBandwidth
+value for each monitored interface. Mostly only ethernet interfaces support
+this feature.
+.B MaxBandwidth
+or interface specific
+.B MaxBW
+will be used as fallback value if detection fails.
+1 = enabled, 0 = disabled. (vnstat and vnstatd only)
+
+.TP
+.B BootVariation
+Time in seconds how much the boot time reported by system kernel can variate
+between updates. Value range: 0..300
+
+.TP
+.B CheckDiskSpace
+Enable or disable the availability check of at least some free disk space before
+a database write. 1 = enabled, 0 = disabled.
+
+.TP
+.B DatabaseDir
+Specifies the directory where interface databases are to be stored.
+A full path must be given and a leading '/' isn't required.
+
+.TP
+.B "DayFormat, MonthFormat, TopFormat"
+Formatting of date in available outputs. Uses the same format as
+.BR date (1).
+(vnstat and vnstati only)
+
+.TP
+.B DefaultDecimals
+Number of decimals to use in outputs. Value range: 0..2
+(vnstat and vnstati only)
+
+.TP
+.B HourlyDecimals
+Number of decimals to use in hourly output. Value range: 0..2
+(vnstat only)
+
+.TP
+.B HourlySectionStyle
+Select what kind of spacer is used for separating the numerical sections of the
+hourly output. 0 = none, 1 = '|', 2 = '][', 3 = '[ ]'.
+(vnstat only)
+
+.TP
+.B Interface
+Default interface used when no other interface is specified on
+the command line. (vnstat and vnstati only)
+
+.TP
+.B Locale
+Locale setting to be used for prints. This replaces the LC_ALL
+environment variable. Set to "-" or leave empty in order to use the
+system default value. (vnstat and vnstati only)
+
+.TP
+.B MaxBandwidth
+Maximum bandwidth for all interfaces. If the interface specific traffic
+exceeds the given value then the data is assumed to be invalid and rejected.
+Set to 0 in order to disable the feature. Value range: 0..50000
+(vnstat and vnstatd only)
+
+.TP
+.B MaxBW
+Same as MaxBandwidth but can be used for setting individual limits
+for selected interfaces. The name of the interface is specified directly
+after the MaxBW keyword without spaces. For example MaxBWeth0 for eth0
+and MaxBWppp0 for ppp0. Value range: 0..50000 (vnstat and vnstatd only)
+
+.TP
+.B MonthRotate
+Day of month that months are expected to change. Usually set to
+1 but can be set to alternative values for example for tracking
+monthly billed traffic where the billing period doesn't start on
+the first day. Value range: 1..28 (vnstat and vnstatd only)
+
+.TP
+.B OutputStyle
+Modify the content and style of text outputs. 0 = minimal and
+narrow output for terminal with limited width, 1 = normal output with
+bar column visible, 2 = same as 1 except rate is visible in summary
+and weekly outputs, 3 = rate column is visible in all outputs where it
+is supported. (vnstat and vnstati only)
+
+.TP
+.B QueryMode
+Default query mode when no parameters are given. 0 = normal, 1 = days,
+2 = months, 3 = top10, 4 = exportdb, 5 = short, 6 = weeks, 7 = hours and
+8 = xml. (vnstat only)
+
+.TP
+.B RateUnit
+Select which unit is used when traffic rate is visible. 0 = bytes, 1 = bits.
+(vnstat and vnstati only)
+
+.TP
+.B RateUnitMode
+Select used prefix when traffic rate is visible in bits per second.
+0 = IEC binary prefixes (Kibit/s...), 1 = SI decimal prefixes (kbit/s...).
+(vnstat and vnstati only)
+
+.TP
+.B "RXCharacter, TXCharacter"
+Character used for representing the percentual share of received
+and transmitted traffic in daily output. (vnstat only)
+
+.TP
+.B "RXHourCharacter, TXHourCharacter"
+Character used for representing the percentual share of received
+and transmitted traffic in hourly output. (vnstat only)
+
+.TP
+.B Sampletime
+Defines how many seconds the \-tr option will sample traffic.
+Value range: 2..600 (vnstat only)
+
+.TP
+.B TrafficlessDays
+Log days without any traffic to daily list. 1 = enabled, 0 = disabled.
+(vnstat and vnstatd only)
+
+.TP
+.B UnitMode
+Select how units are prefixed. This will option changes only the prefix,
+not how traffic is calculated. 0 = IEC standard prefixes
+(KiB/MiB/GiB/TiB), 1 = old style binary prefixes (KB/MB/GB/TB).
+(vnstat and vnstati only)
+
+.TP
+.B UseFileLocking
+Enable or disable the use of file locking during database access. Disabling
+file locking may cause database corruption if several processes are trying
+to write to the file at the same time.
+
+.SH DAEMON RELATED KEYWORDS
+
+.TP
+.B BandwidthDetectionInterval
+How often in minutes interface specific detection of
+.B MaxBandwidth
+is done for detecting possible changes when
+.B BandwidthDetection
+is enabled. Can be disabled by setting to 0. Value range: 0..30
+
+.TP
+.B CreateDirs
+Enable or disable the creation of directories when a configured path doesn't
+exist. This includes
+.B DatabaseDir
+,
+.B LogFile
+and
+.B PidFile
+directories. The
+.B LogFile
+directory will be created only when
+.B UseLogging
+has been set to 1. The
+.B PidFile
+directory will be created only if the daemon is started as a background process.
+The daemon process will try to create the directory using permissions of the
+user used to start the process.
+
+.TP
+.B DaemonGroup
+Specify the user to which the daemon process will switch during startup.
+The user can either be the name of the group or a numerical group id.
+Leave empty to disable the group switch. This option can only be used when
+the process is started as root.
+
+.TP
+.B DaemonUser
+Specify the user to which the daemon process will switch during startup.
+The user can either be the login of the user or a numerical user id.
+Leave empty to disable the user switch. This option can only be used when
+the process is started as root.
+
+.TP
+.B LogFile
+Specify log file path and name to be used if UseLogging is set to 1.
+
+.TP
+.B OfflineSaveInterval
+How often in minutes cached interface data is saved to file when all monitored
+interfaces are offline. Value range:
+.BR SaveInterval "..60"
+
+.TP
+.B PidFile
+Specify pid file path and name to be used.
+
+.TP
+.B PollInterval
+How often in seconds interfaces are checked for status changes.
+Value range: 2..60
+
+.TP
+.B SaveInterval
+How often in minutes cached interface data is saved to file.
+Value range: (
+.BR UpdateInterval " / 60 )..60"
+
+.TP
+.B SaveOnStatusChange
+Enable or disable the additional saving to file of cached interface data
+when the availability of an interface changes, i.e., when an interface goes
+offline or comes online. 1 = enabled, 0 = disabled.
+
+.TP
+.B TimeSyncWait
+How many minutes to wait during daemon startup for system clock to sync if
+most recent database update appears to be in the future. This may be needed
+in systems without a real-time clock (RTC) which require some time after boot
+to query and set the correct time. 0 = wait disabled.
+Value range: 0..60
+
+.TP
+.B UpdateFileOwner
+Enable or disable the update of file ownership during daemon process startup
+or during manual creation of new databases. During daemon startup, only database,
+log and pid files will be modified if the user or group change feature (
+.B DaemonUser
+or
+.B DaemonGroup
+) is enabled and the files don't match the requested user or group. During manual
+database creation, this option will cause file ownership to be inherited from the
+database directory if the directory already exists. This option only has effect
+when the process is started as root or via sudo.
+
+.TP
+.B UpdateInterval
+How often in seconds the interface data is updated. Value range:
+.BR PollInterval "..300"
+
+.TP
+.B UseLogging
+Enable or disable logging. 0 = disabled, 1 = logfile and 2 = syslog.
+
+.SH IMAGE OUTPUT RELATED KEYWORDS
+
+.TP
+.B CBackground
+Background color.
+
+.TP
+.B CEdge
+Edge color if visible.
+
+.TP
+.B CHeader
+Header background color.
+
+.TP
+.B CHeaderTitle
+Header title text color.
+
+.TP
+.B CHeaderDate
+Header date text color.
+
+.TP
+.B CLine
+Line color.
+
+.TP
+.B CLineL
+Lighter version of line color. Set to '-' in order to use a calculated
+value based on CLine.
+
+.TP
+.B CRx
+Color for received data.
+
+.TP
+.B CRxD
+Darker version of received data color. Set to '-' in order to use
+a calculated value based on CRx.
+
+.TP
+.B CText
+Common text color.
+
+.TP
+.B CTx
+Color for transmitted data.
+
+.TP
+.B CTxD
+Darker version of transmitted data color. Set to '-' in order to use
+a calculated value based on CTx.
+
+.TP
+.B HeaderFormat
+Formatting of date in header. Uses the same format as
+.BR date (1).
+
+.TP
+.B HourlyRate
+Show hours with rate instead of transferred amount. 1 = enabled, 0 = disabled.
+
+.TP
+.B SummaryLayout
+Select the used layout of the summary output. 1 = layout introduced in version
+1.8 with monthly traffic included, 0 = layout used before version 1.8, doesn't
+contain monthly traffic and doesn't support average rate.
+
+.TP
+.B SummaryRate
+Show rate in summary output if available. 1 = enabled, 0 = disabled.
+
+.TP
+.B TransparentBg
+Set background color as transparent. 1 = enabled, 0 = disabled.
+
+.SH FILES
+
+.TP
+.I /etc/vnstat.conf
+Config file that will be used unless
+.I $HOME/.vnstatrc
+exists or alternative value is given as command line parameter.
+
+.SH RESTRICTIONS
+
+Using long date output formats may cause misalignment in shown columns if the
+length of the date exceeds the fixed size allocation.
+
+.SH AUTHOR
+
+Teemu Toivola <tst at iki dot fi>
+
+.SH "SEE ALSO"
+
+.BR vnstat (1),
+.BR vnstati (1),
+.BR vnstatd (1),
+.BR units (7)
