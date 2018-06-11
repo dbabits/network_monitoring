@@ -13,6 +13,8 @@ create_db(){
               ,rx           int        not null
               ,rxs          int        not null -- rx bytes/sec = (rx - prev_rx)/(ts - prev_ts)
               ,N            int        not null -- +=1
+              ,mean         int        not null
+              ,summ         int        not null
               /*
               ,old_rxsmean  int        not null
               ,new_rxsmean  int        not null
@@ -29,7 +31,10 @@ push(){
   local uptime_s=$(cat /proc/uptime | awk '{printf "%0.f", $1}')
   local rx_since_uptime=$(</sys/class/net/eth0/statistics/rx_bytes)
   cat <<EOF | sqlite -header -column -echo $DB
-    create temp table old as select host,ip,ts,rx,N from host_stats where host='$(hostname)';
+    create temp table old as 
+    select host,ip,ts,rx,N,mean,summ 
+    from host_stats 
+    where host='$(hostname)';
 
     create temp table new (
        host string not null
@@ -50,11 +55,24 @@ push(){
           ,ifnull(o.rx,$rx_since_uptime)                as old_rx
           ,(n.rx - ifnull(o.rx,$rx_since_uptime) ) / (n.ts - ifnull(o.ts,strftime('%s','now')-$uptime_s) ) as rxs
           ,ifnull(o.N+1,1)                              as N
+          ,o.mean + (n.rx - o.mean) / o.N+1             as mean
+          --,o.summ + (n.rx - o.mean) * (n.rx - mean)   as summ
+          --,ifnull(o.mean,0) + (n.rx - ifnull(o.mean,0))/ ifnull(o.N+1,1) as mean
+          --,ifnull(o.summ,0) + (n.rx - ifnull(o.mean,0))*(n.rx - mean)
     from temp.new n LEFT OUTER JOIN temp.old o 
          ON n.host=o.host;
+
+    UPDATE temp.updates
+    SET mean = n.rx, summ = 0 
+    WHERE N = 1;
+
+    UPDATE temp.updates
+    SET mean = n.rx, summ = 0 
+    WHERE N = 1;
     
     REPLACE INTO host_stats (host,ip,ts,rx,rxs,N)
-    SELECT host,ip,ts,rx,rxs,N FROM temp.updates t
+    SELECT host,ip,ts,rx,rxs,N 
+    FROM temp.updates t
     ;
 
     select changes() as changes;
